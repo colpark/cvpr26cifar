@@ -1,6 +1,4 @@
-# CIFAR-10 Flow Matching with U-Net Configuration
-# WARNING: This config produces a ~97M parameter model (large for CIFAR-10)
-# For faster training, use cifar10_fm_unet_small.yaml (~35M params)
+# CIFAR-10 Flow Matching with U-Net Configuration (Smaller, ~35M params)
 
 model_type: "flow_matching"
 
@@ -9,7 +7,7 @@ model:
   type: "unet_fm"
   dim: 128
   image_size: 32
-  dim_multiply: [1, 2, 4, 4]
+  dim_multiply: [1, 2, 2, 2]  # Smaller than default [1, 2, 4, 4]
   channel: 3
   num_res_blocks: 2
   attn_resolutions: [16]
@@ -58,6 +56,6 @@ training:
   save_every: 10000
 
 # Paths
-save_dir: "./results/cifar10_fm_unet"
+save_dir: "./results/cifar10_fm_unet_small"
 device: "cuda"
 seed: 42

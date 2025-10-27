@@ -1,18 +1,17 @@
-# CIFAR-10 DDPM Baseline Configuration
-# WARNING: This config produces a ~97M parameter model (large for CIFAR-10)
-# For faster training, use cifar10_ddpm_small.yaml (~35M) or cifar10_ddpm_tiny.yaml (~10M)
+# CIFAR-10 DDPM Baseline Configuration (Tiny, ~10M params)
+# Use this for fast experimentation and debugging
 
 model_type: "ddpm"
 
 # Model architecture
 model:
   type: "unet_ddpm"
-  dim: 128
+  dim: 64
   image_size: 32
   dim_multiply: [1, 2, 4, 4]
   channel: 3
-  num_res_blocks: 2
-  attn_resolutions: [16]
+  num_res_blocks: 1  # Reduced from 2
+  attn_resolutions: []  # No attention for speed
   dropout: 0.1
   groups: 32
 
@@ -27,14 +26,14 @@ dataset:
   root: "./data"
   train: true
   augment_horizontal_flip: false
-  batch_size: 128
+  batch_size: 256  # Larger batch possible with smaller model
   num_workers: 4
 
 # Sparsity configuration
 sparsity:
-  mode: "random_epoch"  # random_epoch, random_iter, fixed_instance, fixed_all
-  pattern: "random"      # random, block, grid
-  sparsity: 0.2          # 20% total pixels (10% cond + 10% target)
+  mode: "random_epoch"
+  pattern: "random"
+  sparsity: 0.2
   block_size: 5
   num_blocks: 6
   grid_stride: 2
@@ -54,6 +53,6 @@ training:
   save_every: 10000
 
 # Paths
-save_dir: "./results/cifar10_ddpm"
+save_dir: "./results/cifar10_ddpm_tiny"
 device: "cuda"
 seed: 42
