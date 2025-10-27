@@ -31,7 +31,7 @@ dataset:
 # Sparsity configuration
 sparsity:
   mode: "random_epoch"
-  pattern: "grid"  # Grid pattern recommended for transformer
+  pattern: "random"  # Random sparse sampling
   sparsity: 0.2
   block_size: 5
   num_blocks: 6
