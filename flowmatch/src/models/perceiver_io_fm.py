@@ -157,11 +157,12 @@ class PerceiverIOFM(nn.Module):
         self.num_latents = num_latents
 
         # Input projection: pixel values + 2D Fourier features
-        input_dim = channel * 3 + input_fourier_features * 4  # x, sparse, mask + Fourier (sin/cos for 2D)
+        # Fourier features: (scale // 2) frequency bands * 4 (sin/cos for x and y)
+        input_dim = channel * 3 + (input_fourier_features // 2) * 4
         self.input_proj = nn.Linear(input_dim, latent_dim)
 
         # Query projection: 2D Fourier features
-        query_dim = query_fourier_features * 4
+        query_dim = (query_fourier_features // 2) * 4
         self.query_proj = nn.Linear(query_dim, latent_dim)
 
         # Learnable latent array
