@@ -1,0 +1,62 @@
+# CIFAR-10 Flow Matching with Perceiver IO V2 Configuration
+# V2 improvements: Spatial latent structure, variable resolution support, better SR
+
+model_type: "flow_matching"
+
+# Model architecture (V2 with spatial awareness)
+model:
+  type: "perceiver_io_fm_v2"
+  image_size: 32
+  channel: 3
+  latent_dim: 256       # Reduced for efficiency
+  num_latents: 256      # 16x16 spatial grid (must be perfect square)
+  depth: 4              # Shallower than V1
+  num_heads: 4
+  head_dim: 64
+  input_fourier_features: 32
+  query_fourier_features: 32
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 128  # Larger batch with smaller model
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "fixed_instance"  # Fixed random mask per image instance
+  pattern: "random"  # Random sparse sampling
+  sparsity: 0.2
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 4
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002  # Slightly higher LR
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Super-resolution (V2 supports variable resolution natively)
+  target_size: null  # [64, 64] or [96, 96]
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_perceiver_v2"
+device: "cuda"
+seed: 42

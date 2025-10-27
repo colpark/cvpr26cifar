@@ -13,6 +13,7 @@ from .models.unet_ddpm import UNetDDPM
 from .models.unet_fm import UNetFM
 from .models.dit_fm import DiTFM
 from .models.perceiver_io_fm import PerceiverIOFM
+from .models.perceiver_io_fm_v2 import PerceiverIOFMV2
 from .diffusion.ddpm import GaussianDiffusion
 from .diffusion.rectified_flow import RectifiedFlow
 from .trainers.trainer_ddpm import DDPMTrainer
@@ -81,6 +82,17 @@ def build_model(config, device):
         )
     elif model_type == 'perceiver_io_fm':
         backbone = PerceiverIOFM(
+            channel=model_config['channel'],
+            latent_dim=model_config['latent_dim'],
+            num_latents=model_config['num_latents'],
+            depth=model_config['depth'],
+            num_heads=model_config['num_heads'],
+            head_dim=model_config['head_dim'],
+            input_fourier_features=model_config['input_fourier_features'],
+            query_fourier_features=model_config['query_fourier_features']
+        )
+    elif model_type == 'perceiver_io_fm_v2':
+        backbone = PerceiverIOFMV2(
             channel=model_config['channel'],
             latent_dim=model_config['latent_dim'],
             num_latents=model_config['num_latents'],

@@ -127,8 +127,14 @@ class RectifiedFlow(nn.Module):
             t_current = 1.0 - i / steps
             t_batch = torch.full((batch_size,), t_current, device=device)
 
-            # Predict velocity
-            v = self.model(x, t_batch, sparse_input=sparse_input, mask=mask)
+            # Predict velocity (pass target_size for V2 models that support it)
+            # Check if model accepts target_size parameter (PerceiverIOFMV2)
+            import inspect
+            model_params = inspect.signature(self.model.forward).parameters
+            if 'target_size' in model_params:
+                v = self.model(x, t_batch, sparse_input=sparse_input, mask=mask, target_size=(H, W))
+            else:
+                v = self.model(x, t_batch, sparse_input=sparse_input, mask=mask)
 
             # Euler step: move backwards (t: 1→0, so velocity is -v)
             x = x - dt * v
