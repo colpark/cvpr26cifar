@@ -208,6 +208,12 @@ class UNetDDPM(nn.Module):
             if mask.size(1) != C:
                 mask = mask.repeat(1, C, 1, 1) if mask.size(1) == 1 else mask[:, :C]
             x = torch.cat([x, sparse_input, mask], dim=1)
+        else:
+            # Unconditional generation: use zeros for sparse_input and mask
+            C = x.size(1)
+            sparse_input = torch.zeros_like(x)
+            mask = torch.zeros_like(x)
+            x = torch.cat([x, sparse_input, mask], dim=1)
 
         # Time embedding
         t_emb = self.time_embedding(t)

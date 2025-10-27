@@ -216,15 +216,19 @@ class PerceiverIOFM(nn.Module):
         Args:
             x: (B, C, H, W)
             t: (B,) continuous timesteps
-            sparse_input: (B, C, H, W)
-            mask: (B, C, H, W)
+            sparse_input: (B, C, H, W) or None for unconditional
+            mask: (B, C, H, W) or None for unconditional
 
         Returns:
             (B, C, H, W) predicted velocity
         """
-        assert sparse_input is not None and mask is not None
-
         B, C, H, W = x.shape
+
+        # Handle unconditional generation
+        if sparse_input is None:
+            sparse_input = torch.zeros_like(x)
+        if mask is None:
+            mask = torch.zeros_like(x)
 
         # Ensure channel alignment
         if sparse_input.size(1) != C:

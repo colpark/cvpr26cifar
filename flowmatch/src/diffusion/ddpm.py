@@ -173,19 +173,24 @@ class GaussianDiffusion(nn.Module):
 
         Args:
             batch_size: Number of samples to generate
-            sparse_input: (B, C, H, W) sparse observations
-            mask: (B, C, H, W) conditioning mask
+            sparse_input: (B, C, H, W) sparse observations (None for unconditional)
+            mask: (B, C, H, W) conditioning mask (None for unconditional)
             clip: Whether to clip during sampling
             device: Device to generate on
 
         Returns:
             (B, C, H, W) generated images in [-1, 1]
         """
-        assert sparse_input is not None and mask is not None, "Must provide sparse_input and mask"
+        # Determine number of channels
+        if sparse_input is not None:
+            C = sparse_input.shape[1]
+        else:
+            C = 3  # RGB for CIFAR-10
 
-        C = sparse_input.shape[1]
+        # Initialize from noise
         x_t = torch.randn(batch_size, C, self.image_size, self.image_size, device=device)
 
+        # Sample from p(x_{t-1} | x_t)
         for t in tqdm(reversed(range(self.timesteps)), desc='DDPM Sampling', total=self.timesteps, leave=False):
             x_t = self.p_sample(x_t, t, sparse_input=sparse_input, mask=mask, clip=clip)
 
