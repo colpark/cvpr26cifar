@@ -5,6 +5,7 @@ model_type: "flow_matching"
 # Model architecture
 model:
   type: "perceiver_io_fm"
+  image_size: 32
   channel: 3
   latent_dim: 512
   num_latents: 256

@@ -5,6 +5,7 @@ model_type: "flow_matching"
 # Model architecture
 model:
   type: "dit_fm"
+  image_size: 32
   patch_size: 4
   dim: 512
   depth: 12
