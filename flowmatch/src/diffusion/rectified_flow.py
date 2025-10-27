@@ -84,8 +84,8 @@ class RectifiedFlow(nn.Module):
 
         Args:
             batch_size: Number of samples
-            sparse_input: (B, C, H, W) sparse observations
-            mask: (B, C, H, W) conditioning mask
+            sparse_input: (B, C, H, W) sparse observations (None for unconditional)
+            mask: (B, C, H, W) conditioning mask (None for unconditional)
             steps: Number of ODE integration steps
             target_size: Optional (H, W) for zero-shot super-resolution
             clip: Whether to clip output to [-1, 1]
@@ -94,9 +94,11 @@ class RectifiedFlow(nn.Module):
         Returns:
             (B, C, H, W) or (B, C, target_H, target_W) generated images
         """
-        assert sparse_input is not None and mask is not None, "Must provide sparse_input and mask"
-
-        C = sparse_input.shape[1]
+        # Determine number of channels
+        if sparse_input is not None:
+            C = sparse_input.shape[1]
+        else:
+            C = 3  # RGB for CIFAR-10
 
         # Determine output size
         if target_size is None:
@@ -104,7 +106,8 @@ class RectifiedFlow(nn.Module):
         else:
             H, W = target_size
 
-            # Upsample sparse and mask for SR
+        # Upsample sparse and mask for SR if needed
+        if sparse_input is not None and mask is not None:
             if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
                 sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
                 mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
@@ -127,8 +130,9 @@ class RectifiedFlow(nn.Module):
             # Euler step: move backwards (t: 1→0, so velocity is -v)
             x = x - dt * v
 
-            # Hard projection: enforce known pixels
-            x = mask * sparse_input + (1 - mask) * x
+            # Hard projection: enforce known pixels (skip for unconditional)
+            if mask is not None and sparse_input is not None:
+                x = mask * sparse_input + (1 - mask) * x
 
         if clip:
             x = x.clamp(-1.0, 1.0)
@@ -172,14 +176,19 @@ class RectifiedFlowODESampler:
     @torch.no_grad()
     def _heun_sample(self, batch_size, sparse_input, mask, steps, target_size, clip, device):
         """Heun's method (2nd order)."""
-        assert sparse_input is not None and mask is not None
+        # Determine number of channels
+        if sparse_input is not None:
+            C = sparse_input.shape[1]
+        else:
+            C = 3  # RGB for CIFAR-10
 
-        C = sparse_input.shape[1]
         H, W = target_size if target_size else (self.flow.image_size, self.flow.image_size)
 
-        if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
-            sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
-            mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
+        # Upsample sparse and mask for SR if needed
+        if sparse_input is not None and mask is not None:
+            if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
+                sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
+                mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
 
         x = torch.randn(batch_size, C, H, W, device=device)
         dt = 1.0 / steps
@@ -193,7 +202,8 @@ class RectifiedFlowODESampler:
 
             # Predict next point
             x_next = x - dt * v1
-            x_next = mask * sparse_input + (1 - mask) * x_next
+            if mask is not None and sparse_input is not None:
+                x_next = mask * sparse_input + (1 - mask) * x_next
 
             # Second velocity evaluation
             t_next = t_current - dt
@@ -203,21 +213,27 @@ class RectifiedFlowODESampler:
             # Average velocities
             v_avg = (v1 + v2) / 2
             x = x - dt * v_avg
-            x = mask * sparse_input + (1 - mask) * x
+            if mask is not None and sparse_input is not None:
+                x = mask * sparse_input + (1 - mask) * x
 
         return x.clamp(-1.0, 1.0) if clip else x
 
     @torch.no_grad()
     def _rk4_sample(self, batch_size, sparse_input, mask, steps, target_size, clip, device):
         """4th-order Runge-Kutta method."""
-        assert sparse_input is not None and mask is not None
+        # Determine number of channels
+        if sparse_input is not None:
+            C = sparse_input.shape[1]
+        else:
+            C = 3  # RGB for CIFAR-10
 
-        C = sparse_input.shape[1]
         H, W = target_size if target_size else (self.flow.image_size, self.flow.image_size)
 
-        if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
-            sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
-            mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
+        # Upsample sparse and mask for SR if needed
+        if sparse_input is not None and mask is not None:
+            if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
+                sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
+                mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
 
         x = torch.randn(batch_size, C, H, W, device=device)
         dt = 1.0 / steps
@@ -231,23 +247,27 @@ class RectifiedFlowODESampler:
 
             # k2
             x_k2 = x - 0.5 * dt * k1
-            x_k2 = mask * sparse_input + (1 - mask) * x_k2
+            if mask is not None and sparse_input is not None:
+                x_k2 = mask * sparse_input + (1 - mask) * x_k2
             t_k2 = torch.full((batch_size,), t_current - 0.5 * dt, device=device)
             k2 = self.flow.model(x_k2, t_k2, sparse_input=sparse_input, mask=mask)
 
             # k3
             x_k3 = x - 0.5 * dt * k2
-            x_k3 = mask * sparse_input + (1 - mask) * x_k3
+            if mask is not None and sparse_input is not None:
+                x_k3 = mask * sparse_input + (1 - mask) * x_k3
             k3 = self.flow.model(x_k3, t_k2, sparse_input=sparse_input, mask=mask)
 
             # k4
             x_k4 = x - dt * k3
-            x_k4 = mask * sparse_input + (1 - mask) * x_k4
+            if mask is not None and sparse_input is not None:
+                x_k4 = mask * sparse_input + (1 - mask) * x_k4
             t_k4 = torch.full((batch_size,), t_current - dt, device=device)
             k4 = self.flow.model(x_k4, t_k4, sparse_input=sparse_input, mask=mask)
 
             # Combine
             x = x - (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
-            x = mask * sparse_input + (1 - mask) * x
+            if mask is not None and sparse_input is not None:
+                x = mask * sparse_input + (1 - mask) * x
 
         return x.clamp(-1.0, 1.0) if clip else x

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree:*)",
+      "Bash(for f in cli.py datasets/cifar10.py models/unet_ddpm.py models/unet_fm.py models/dit_fm.py models/perceiver_io_fm.py diffusion/ddpm.py diffusion/rectified_flow.py sparsity/controller.py trainers/trainer_base.py trainers/trainer_ddpm.py trainers/trainer_fm.py utils/metrics.py utils/viz.py utils/time_emb.py)",
+      "Bash(do echo -n \"flowmatch/src/$f ... \")",
+      "Bash(/dev/null)",
+      "Bash(done)",
+      "Bash(python3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
