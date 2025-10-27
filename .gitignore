@@ -1,0 +1,218 @@
+# Whitelist approach: Ignore everything, then explicitly allow code files
+# Based on actual project structure from file_tree.txt
+
+# ==============================================
+# IGNORE EVERYTHING BY DEFAULT
+# ==============================================
+*
+
+# ==============================================
+# ALLOW DIRECTORIES (for git traversal)
+# ==============================================
+!*/
+
+# ==============================================
+# WHITELIST: Python source code
+# ==============================================
+!*.py
+
+# But ignore backup/copy files
+*-Copy*.py
+*-copy.py
+*(perc).py
+*-og.py
+
+# ==============================================
+# WHITELIST: Jupyter notebooks (small ones only)
+# ==============================================
+!*.ipynb
+
+# But ignore large notebooks with outputs (>500KB)
+NavierStokes.ipynb
+NavierStokes-Copy*.ipynb
+NSSuperRes.ipynb
+paper_prepare_dataset*.ipynb
+Plots.ipynb
+Untitled*.ipynb
+
+# ==============================================
+# WHITELIST: Configuration files
+# ==============================================
+!*.yaml
+!*.yml
+!*.json
+!*.toml
+!*.cfg
+!*.ini
+!*.conf
+
+# ==============================================
+# WHITELIST: Documentation and helpers
+# ==============================================
+!*.md
+!*.txt
+!*.sh
+!README*
+!LICENSE*
+!Makefile
+!requirements.txt
+!setup.py
+!.gitignore
+!.gitattributes
+
+# But ignore result text files
+fid_scores*.txt
+metrics*.txt
+mse_hint_scores.txt
+
+# ==============================================
+# BLOCK: All checkpoint and result directories
+# ==============================================
+**/checkpoints/
+**/model_pts/
+**/NavierStokesCheckpoints/
+
+# Result directories
+**/*_results/
+**/results/
+**/output/
+**/outputs/
+**/runs/
+**/experiments/
+
+# Specific result directories from project
+airdelhi_*/
+delhi_*/
+eval_*/
+fid_*/
+*_eval/
+*_eval_*/
+debug/
+debug_*/
+
+# ==============================================
+# BLOCK: All data directories
+# ==============================================
+**/data/
+**/data_*/
+**/datasets/
+data
+data_*
+stl10_*
+
+# ==============================================
+# BLOCK: All model files and checkpoints
+# ==============================================
+*.pt
+*.pth
+*.ckpt
+*.checkpoint
+*.h5
+*.hdf5
+*.weights
+*.safetensors
+*.pkl
+*.pickle
+
+# ==============================================
+# BLOCK: All figures and images
+# ==============================================
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
+*.pdf
+*.eps
+
+# Figure directories
+**/figures/
+**/fig/
+**/figs/
+**/images/
+**/imgs/
+**/plots/
+**/viz/
+**/grids/
+**/composites/
+**/previews/
+
+# ==============================================
+# BLOCK: Large data files
+# ==============================================
+*.npy
+*.npz
+*.parquet
+*.bin
+*.tar.gz
+*.zip
+*.7z
+*.rar
+*.csv
+
+# But allow small CSVs if needed (uncomment if you have small config CSVs)
+# !config*.csv
+
+# ==============================================
+# BLOCK: Logs and caches
+# ==============================================
+**/logs/
+**/wandb/
+**/tensorboard/
+**/.tensorboard/
+**/mlruns/
+**/__pycache__/
+**/.pytest_cache/
+**/.ipynb_checkpoints/
+*.pyc
+*.pyo
+*.pyd
+.cache/
+
+# ==============================================
+# BLOCK: Virtual environments
+# ==============================================
+**/venv/
+**/env/
+**/ENV/
+**/.venv/
+
+# ==============================================
+# BLOCK: IDE and OS files
+# ==============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==============================================
+# KEEP: Core source directories
+# ==============================================
+# These are already allowed via !*.py, but listing for clarity
+# - src/ (main implementation)
+# - models/ (model definitions)
+# - config/ (configuration files)
+# - uq/ (uncertainty quantification code)
+
+# ==============================================
+# BLOCK: Backup and copy directories in src/
+# ==============================================
+src/afterthemess/
+src/beforeNS/
+src/copies/
+src/copiesafteruq/
+src/GoodCopiesRecent/
+
+# ==============================================
+# SIZE ESTIMATES (for reference)
+# ==============================================
+# Expected total size: 2-5MB
+# - Python source: ~300KB
+# - Config files: ~14KB
+# - Small helpers: ~20KB
+# - Cleaned notebooks: ~500KB-1MB

@@ -1,0 +1,35 @@
+type: original
+unet:
+  dim: 64
+  image_size: 64
+  dim_multiply:
+  - 1
+  - 2
+  - 2
+  - 2
+  attn_resolutions:
+  - 16
+  dropout: 0.1
+  num_res_blocks: 2
+ddim:
+  0:
+    ddim_sampling_steps: 20
+    sample_every: 10000
+    calculate_fid: false
+    num_fid_sample: 30000
+    save: false
+trainer:
+  dataset: navierstokes
+  batch_size: 64
+  lr: 0.0002
+  total_step: 600000
+  save_and_sample_every: 2500
+  num_samples: 16
+  fid_estimate_batch_size: 128
+  clip: true
+
+  sparsity_mode: fixed_instance        # or fixed_all, fixed_instance
+  sparsity_pattern: block          # or block
+  sparsity_level: 0.4               # total % of pixels used (e.g. 20% means 10% cond, 10% target)
+  block_size: 8 
+  num_blocks: 2
