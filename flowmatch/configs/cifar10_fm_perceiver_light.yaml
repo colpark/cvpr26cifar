@@ -1,0 +1,62 @@
+# CIFAR-10 Flow Matching with Perceiver IO (Lightweight) Configuration
+# Reduced model size for faster training and lower memory usage
+
+model_type: "flow_matching"
+
+# Model architecture (lighter version)
+model:
+  type: "perceiver_io_fm"
+  image_size: 32
+  channel: 3
+  latent_dim: 256       # Reduced from 512
+  num_latents: 128      # Reduced from 256
+  depth: 4              # Reduced from 6
+  num_heads: 4          # Reduced from 8
+  head_dim: 64
+  input_fourier_features: 32   # Reduced from 64
+  query_fourier_features: 32   # Reduced from 64
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 128  # Larger batch possible with lighter model
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "fixed_instance"  # Fixed random mask per image instance
+  pattern: "random"  # Random sparse sampling
+  sparsity: 0.2
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 4
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002  # Slightly higher LR for smaller model
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Super-resolution (Perceiver naturally handles different resolutions)
+  target_size: null  # [64, 64] or [128, 128]
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_perceiver_light"
+device: "cuda"
+seed: 42

@@ -34,9 +34,14 @@ cd flowmatch
 flowmatch/
 ├── configs/                    # YAML configuration files
 │   ├── cifar10_ddpm.yaml      # DDPM baseline
+│   ├── cifar10_ddpm_small.yaml # DDPM small (~35M params)
+│   ├── cifar10_ddpm_tiny.yaml  # DDPM tiny (~10M params)
 │   ├── cifar10_fm_unet.yaml   # Flow Matching with U-Net
+│   ├── cifar10_fm_unet_small.yaml # FM U-Net small
 │   ├── cifar10_fm_dit.yaml    # Flow Matching with DiT
-│   └── cifar10_fm_perceiver.yaml  # Flow Matching with Perceiver IO
+│   ├── cifar10_fm_perceiver.yaml  # Flow Matching with Perceiver IO
+│   ├── cifar10_fm_perceiver_light.yaml  # Perceiver IO light (~50% params)
+│   └── cifar10_fm_perceiver_tiny.yaml   # Perceiver IO tiny (~25% params)
 ├── src/
 │   ├── datasets/              # Dataset wrappers
 │   │   └── cifar10.py
@@ -113,8 +118,24 @@ python -m src.cli --config configs/cifar10_fm_perceiver.yaml
 **Configuration highlights:**
 - Architecture: Latent bottleneck with cross-attention
 - Naturally handles variable resolutions
-- Pattern: grid (recommended for super-resolution)
+- Pattern: random sparse sampling
 - Lower learning rate: 1e-4
+- Model size: Large (latent_dim=512, num_latents=256)
+
+**Lighter variants available:**
+
+```bash
+# Light version (~50% parameters, 2x faster)
+python -m src.cli --config configs/cifar10_fm_perceiver_light.yaml
+
+# Tiny version (~25% parameters, 4x faster)
+python -m src.cli --config configs/cifar10_fm_perceiver_tiny.yaml
+```
+
+**Model size comparison:**
+- **Standard**: latent_dim=512, num_latents=256, depth=6, batch=64
+- **Light**: latent_dim=256, num_latents=128, depth=4, batch=128
+- **Tiny**: latent_dim=128, num_latents=64, depth=3, batch=256
 
 ## Understanding Masked Conditioning
 
