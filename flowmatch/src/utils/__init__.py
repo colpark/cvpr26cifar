@@ -1,10 +1,10 @@
 """Utility modules for metrics, visualization, and time embeddings."""
-from .metrics import compute_fid, compute_psnr, compute_ssim, compute_masked_metrics
-from .viz import save_image_grid, visualize_sparse_reconstruction
-from .time_emb import SinusoidalPositionalEncoding, GaussianFourierEmbedding, ContinuousTimeEmbedding
+from .metrics import FIDScore, compute_psnr, compute_ssim, compute_masked_metrics
+from .viz import save_image_grid, save_comparison_grid, visualize_training_batch
+from .time_emb import SinusoidalPositionalEncoding, GaussianFourierEmbedding, ContinuousTimeEmbedding, DiscreteTimeEmbedding
 
 __all__ = [
-    'compute_fid', 'compute_psnr', 'compute_ssim', 'compute_masked_metrics',
-    'save_image_grid', 'visualize_sparse_reconstruction',
-    'SinusoidalPositionalEncoding', 'GaussianFourierEmbedding', 'ContinuousTimeEmbedding'
+    'FIDScore', 'compute_psnr', 'compute_ssim', 'compute_masked_metrics',
+    'save_image_grid', 'save_comparison_grid', 'visualize_training_batch',
+    'SinusoidalPositionalEncoding', 'GaussianFourierEmbedding', 'ContinuousTimeEmbedding', 'DiscreteTimeEmbedding'
 ]
