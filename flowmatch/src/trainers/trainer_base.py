@@ -122,8 +122,8 @@ class BaseTrainer:
                 running_loss = 0.0
                 running_count = 0
 
-            # Sampling
-            if self.global_step % sample_every == 0 and self.global_step > 0:
+            # Sampling (include step 0 for debugging)
+            if self.global_step % sample_every == 0:
                 self.generate_samples()
 
             # Checkpointing

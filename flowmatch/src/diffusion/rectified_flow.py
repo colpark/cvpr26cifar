@@ -107,8 +107,11 @@ class RectifiedFlow(nn.Module):
             H, W = target_size
 
         # Upsample sparse and mask for SR if needed
+        # For zero-shot SR: model trained at 32x32 generalizes to higher resolutions
+        # via resolution-agnostic positional encoding (Fourier features)
         if sparse_input is not None and mask is not None:
             if H != sparse_input.shape[-2] or W != sparse_input.shape[-1]:
+                # Upsample conditioning to target resolution (nearest neighbor preserves sparse pixels)
                 sparse_input = F.interpolate(sparse_input, size=(H, W), mode='nearest')
                 mask = F.interpolate(mask.float(), size=(H, W), mode='nearest')
 

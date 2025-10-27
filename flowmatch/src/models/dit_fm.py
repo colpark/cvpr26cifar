@@ -269,8 +269,10 @@ class DiTFM(nn.Module):
         tokens, h_patches, w_patches = self.patchify(x, sparse_input, mask)
         B, N, D = tokens.shape
 
-        # Add positional encoding
+        # Add positional encoding (resolution-agnostic via Fourier features)
+        # pos_enc shape: (h_patches * w_patches, dim) = (N, D)
         pos_enc = self.pos_encoding(h_patches, w_patches, tokens.device)
+        assert pos_enc.shape == (N, D), f"Positional encoding shape mismatch: {pos_enc.shape} vs expected ({N}, {D})"
         tokens = tokens + pos_enc.unsqueeze(0)
 
         # Time embedding
