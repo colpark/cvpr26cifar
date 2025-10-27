@@ -1,0 +1,57 @@
+# CIFAR-10 DDPM Baseline Configuration
+
+model_type: "ddpm"
+
+# Model architecture
+model:
+  type: "unet_ddpm"
+  dim: 128
+  image_size: 32
+  dim_multiply: [1, 2, 4, 4]
+  channel: 3
+  num_res_blocks: 2
+  attn_resolutions: [16]
+  dropout: 0.1
+  groups: 32
+
+# Diffusion parameters
+diffusion:
+  timesteps: 1000
+  loss_type: "l2"
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 128
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "random_epoch"  # random_epoch, random_iter, fixed_instance, fixed_all
+  pattern: "random"      # random, block, grid
+  sparsity: 0.2          # 20% total pixels (10% cond + 10% target)
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 2
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_ddpm"
+device: "cuda"
+seed: 42

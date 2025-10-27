@@ -1,0 +1,61 @@
+# CIFAR-10 Flow Matching with U-Net Configuration
+
+model_type: "flow_matching"
+
+# Model architecture
+model:
+  type: "unet_fm"
+  dim: 128
+  image_size: 32
+  dim_multiply: [1, 2, 4, 4]
+  channel: 3
+  num_res_blocks: 2
+  attn_resolutions: [16]
+  dropout: 0.1
+  groups: 32
+  time_emb_scale: 16.0
+
+# Flow Matching parameters (no timesteps needed - continuous time)
+flow:
+  integration_method: "euler"  # euler, heun, rk4
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 128
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "random_epoch"
+  pattern: "random"  # Use "grid" for super-resolution training
+  sparsity: 0.2
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 4  # For grid pattern SR
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50  # ODE integration steps
+
+  # Super-resolution (set to enable zero-shot SR)
+  target_size: null  # [64, 64] or [128, 128] for SR
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_unet"
+device: "cuda"
+seed: 42

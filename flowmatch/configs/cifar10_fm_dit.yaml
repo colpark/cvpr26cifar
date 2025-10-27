@@ -1,0 +1,60 @@
+# CIFAR-10 Flow Matching with DiT (Transformer) Configuration
+
+model_type: "flow_matching"
+
+# Model architecture
+model:
+  type: "dit_fm"
+  patch_size: 4
+  dim: 512
+  depth: 12
+  num_heads: 8
+  mlp_ratio: 4.0
+  channel: 3
+  dropout: 0.1
+  window_size: 8
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 64  # Smaller batch for transformer
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "random_epoch"
+  pattern: "grid"  # Grid pattern recommended for transformer
+  sparsity: 0.2
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 4
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001  # Lower LR for transformer
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Super-resolution
+  target_size: null  # [64, 64] for 2x SR, [128, 128] for 4x SR
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_dit"
+device: "cuda"
+seed: 42

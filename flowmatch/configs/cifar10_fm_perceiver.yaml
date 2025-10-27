@@ -1,0 +1,60 @@
+# CIFAR-10 Flow Matching with Perceiver IO Configuration
+
+model_type: "flow_matching"
+
+# Model architecture
+model:
+  type: "perceiver_io_fm"
+  channel: 3
+  latent_dim: 512
+  num_latents: 256
+  depth: 6
+  num_heads: 8
+  head_dim: 64
+  input_fourier_features: 64
+  query_fourier_features: 64
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset
+dataset:
+  name: "cifar10"
+  root: "./data"
+  train: true
+  augment_horizontal_flip: false
+  batch_size: 64  # Smaller batch for Perceiver
+  num_workers: 4
+
+# Sparsity configuration
+sparsity:
+  mode: "random_epoch"
+  pattern: "grid"  # Grid recommended for Perceiver SR
+  sparsity: 0.2
+  block_size: 5
+  num_blocks: 6
+  grid_stride: 4
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001  # Lower LR for Perceiver
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Super-resolution (Perceiver naturally handles different resolutions)
+  target_size: null  # [64, 64] or [128, 128]
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_perceiver"
+device: "cuda"
+seed: 42
