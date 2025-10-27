@@ -422,6 +422,62 @@ training:
   target_size: null   # For SR: [64, 64] or [128, 128]
 ```
 
+## Training Visualizations
+
+During training, the following visualizations are automatically generated at each `sample_every` interval:
+
+### Directory Structure
+```
+results/
+└── <experiment_name>/
+    ├── grids/                    # Comparison grids showing all components
+    │   └── step_<N>.png
+    ├── components/               # Individual components
+    │   ├── gt_step_<N>.png      # Ground truth images
+    │   ├── sparse_step_<N>.png  # Sparse input (with conditioning mask)
+    │   ├── output_step_<N>.png  # Generated output (conditional)
+    │   └── uncond_step_<N>.png  # Unconditional generation (field prediction 100%)
+    ├── superres/                 # Super-resolution outputs (Flow Matching only)
+    │   ├── sr64_step_<N>.png    # 2x super-resolution (64×64)
+    │   └── sr96_step_<N>.png    # 3x super-resolution (96×96)
+    └── checkpoints/              # Model checkpoints
+        ├── latest.pt
+        └── best.pt
+```
+
+### Visualization Types
+
+**1. Comparison Grid** (`grids/`)
+- Shows all components in a single image for easy comparison
+- Layout: [Ground Truth | Sparse Input | Cond Mask | Output | Target Mask]
+- Useful for tracking training progress
+
+**2. Individual Components** (`components/`)
+- `gt_step_<N>.png`: Original CIFAR-10 images (ground truth)
+- `sparse_step_<N>.png`: Input with sparse conditioning pixels visible
+- `output_step_<N>.png`: Model output with sparse conditioning
+- `uncond_step_<N>.png`: Unconditional generation (no sparse conditioning)
+
+**3. Super-Resolution** (`superres/` - Flow Matching only)
+- `sr64_step_<N>.png`: Zero-shot 2× super-resolution (32×32 → 64×64)
+- `sr96_step_<N>.png`: Zero-shot 3× super-resolution (32×32 → 96×96)
+- Only available for Flow Matching models (DiT, Perceiver IO, U-Net FM)
+- Demonstrates model's ability to generate at higher resolutions
+
+### Configuration
+
+Control visualization frequency in config:
+```yaml
+training:
+  sample_every: 2500  # Generate visualizations every 2500 steps
+```
+
+For faster iteration during debugging:
+```yaml
+training:
+  sample_every: 500   # More frequent visualizations
+```
+
 ## Expected Results
 
 After training for 200k steps:

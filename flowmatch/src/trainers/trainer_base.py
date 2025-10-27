@@ -141,7 +141,7 @@ class BaseTrainer:
         print(f"Training completed. Best loss: {self.best_loss:.4f}")
 
     def generate_samples(self):
-        """Generate and save sample images."""
+        """Generate and save sample images with comprehensive visualizations."""
         self.model.eval()
 
         with torch.no_grad():
@@ -159,26 +159,49 @@ class BaseTrainer:
 
             sparse_input = images * cond_mask
 
-            # Generate samples
-            samples = self.sample(images.shape[0], sparse_input, cond_mask)
+            # 1. Conditional generation (with sparse conditioning)
+            samples_cond = self.sample(images.shape[0], sparse_input, cond_mask)
 
-            # Save comparison grid
+            # 2. Unconditional generation (field prediction 100% - no conditioning)
+            samples_uncond = self.sample(images.shape[0], None, None)
+
+            # Save comparison grid (conditional)
             save_comparison_grid(
-                images, sparse_input, cond_mask, samples, target_mask,
+                images, sparse_input, cond_mask, samples_cond, target_mask,
                 os.path.join(self.save_dir, 'grids', f'step_{self.global_step}.png'),
                 nrow=4
             )
 
-            # Save samples only
+            # Save individual components
+            os.makedirs(os.path.join(self.save_dir, 'components'), exist_ok=True)
+
             save_image_grid(
-                samples,
-                os.path.join(self.save_dir, 'samples', f'step_{self.global_step}.png'),
+                images,
+                os.path.join(self.save_dir, 'components', f'gt_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                sparse_input,
+                os.path.join(self.save_dir, 'components', f'sparse_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                samples_cond,
+                os.path.join(self.save_dir, 'components', f'output_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                samples_uncond,
+                os.path.join(self.save_dir, 'components', f'uncond_step_{self.global_step}.png'),
                 nrow=4
             )
 
             # Compute metrics
-            metrics = compute_masked_metrics(samples, images, target_mask)
-            print(f"Step {self.global_step} | PSNR: {metrics['psnr']:.2f} | SSIM: {metrics['ssim']:.4f}")
+            metrics = compute_masked_metrics(samples_cond, images, target_mask)
+            print(f"Step {self.global_step} | Conditional - PSNR: {metrics['psnr']:.2f} | SSIM: {metrics['ssim']:.4f}")
 
         self.model.train()
 

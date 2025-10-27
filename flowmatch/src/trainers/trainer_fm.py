@@ -2,7 +2,10 @@
 Flow Matching trainer with masked conditioning.
 """
 import torch
+import os
 from .trainer_base import BaseTrainer
+from ..utils.viz import save_image_grid, save_comparison_grid
+from ..utils.metrics import compute_masked_metrics
 
 
 class FMTrainer(BaseTrainer):
@@ -100,3 +103,126 @@ class FMTrainer(BaseTrainer):
             clip=self.clip_sampling,
             device=self.device
         )
+
+    def generate_samples(self):
+        """
+        Generate and save sample images with comprehensive visualizations.
+
+        For Flow Matching, this includes super-resolution at 64x64 and 96x96.
+        """
+        self.model.eval()
+
+        with torch.no_grad():
+            # Get a batch from training data
+            images, indices = next(iter(self.train_loader))
+            images = images[:16].to(self.device)  # Take first 16
+            indices = indices[:16]
+
+            # Generate masks
+            cond_masks, target_masks = self.sparsity_controller.get_masks(
+                images.shape[0], images.shape[1], sample_ids=indices.tolist()
+            )
+            cond_mask = torch.stack(cond_masks).to(self.device)
+            target_mask = torch.stack(target_masks).to(self.device)
+
+            sparse_input = images * cond_mask
+
+            # 1. Conditional generation at native resolution (32x32)
+            samples_cond = self.model.sample(
+                batch_size=images.shape[0],
+                sparse_input=sparse_input,
+                mask=cond_mask,
+                steps=self.sampling_steps,
+                target_size=None,  # Native resolution
+                clip=self.clip_sampling,
+                device=self.device
+            )
+
+            # 2. Unconditional generation (field prediction 100%)
+            samples_uncond = self.model.sample(
+                batch_size=images.shape[0],
+                sparse_input=None,
+                mask=None,
+                steps=self.sampling_steps,
+                target_size=None,
+                clip=self.clip_sampling,
+                device=self.device
+            )
+
+            # 3. Super-resolution at 64x64
+            samples_sr_64 = self.model.sample(
+                batch_size=images.shape[0],
+                sparse_input=sparse_input,
+                mask=cond_mask,
+                steps=self.sampling_steps,
+                target_size=(64, 64),
+                clip=self.clip_sampling,
+                device=self.device
+            )
+
+            # 4. Super-resolution at 96x96
+            samples_sr_96 = self.model.sample(
+                batch_size=images.shape[0],
+                sparse_input=sparse_input,
+                mask=cond_mask,
+                steps=self.sampling_steps,
+                target_size=(96, 96),
+                clip=self.clip_sampling,
+                device=self.device
+            )
+
+            # Save comparison grid (conditional at native resolution)
+            save_comparison_grid(
+                images, sparse_input, cond_mask, samples_cond, target_mask,
+                os.path.join(self.save_dir, 'grids', f'step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            # Save individual components
+            os.makedirs(os.path.join(self.save_dir, 'components'), exist_ok=True)
+
+            save_image_grid(
+                images,
+                os.path.join(self.save_dir, 'components', f'gt_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                sparse_input,
+                os.path.join(self.save_dir, 'components', f'sparse_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                samples_cond,
+                os.path.join(self.save_dir, 'components', f'output_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                samples_uncond,
+                os.path.join(self.save_dir, 'components', f'uncond_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            # Save super-resolution outputs
+            os.makedirs(os.path.join(self.save_dir, 'superres'), exist_ok=True)
+
+            save_image_grid(
+                samples_sr_64,
+                os.path.join(self.save_dir, 'superres', f'sr64_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            save_image_grid(
+                samples_sr_96,
+                os.path.join(self.save_dir, 'superres', f'sr96_step_{self.global_step}.png'),
+                nrow=4
+            )
+
+            # Compute metrics
+            metrics = compute_masked_metrics(samples_cond, images, target_mask)
+            print(f"Step {self.global_step} | Conditional (32x32) - PSNR: {metrics['psnr']:.2f} | SSIM: {metrics['ssim']:.4f}")
+            print(f"Step {self.global_step} | Super-resolution saved: 64x64, 96x96")
+
+        self.model.train()
