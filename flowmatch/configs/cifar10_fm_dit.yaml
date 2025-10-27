@@ -30,7 +30,7 @@ dataset:
 
 # Sparsity configuration
 sparsity:
-  mode: "random_epoch"
+  mode: "fixed_instance"  # Fixed random mask per image instance
   pattern: "random"  # Random sparse sampling
   sparsity: 0.2
   block_size: 5
