@@ -49,6 +49,10 @@ class CoordinateFMTrainer(BaseTrainer):
         self.max_grad_norm = max_grad_norm
         self.eval_resolutions = eval_resolutions
 
+        # Training state
+        self.loss_history = []
+        self.global_step = 0
+
         # Create coordinate grids for each evaluation resolution
         self.coord_grids = {}
         for res in eval_resolutions:
