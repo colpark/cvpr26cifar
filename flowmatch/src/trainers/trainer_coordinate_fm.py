@@ -53,6 +53,10 @@ class CoordinateFMTrainer(BaseTrainer):
         self.loss_history = []
         self.global_step = 0
 
+        # Directory paths
+        self.samples_dir = os.path.join(save_dir, 'samples')
+        self.checkpoint_dir = os.path.join(save_dir, 'checkpoints')
+
         # Create coordinate grids for each evaluation resolution
         self.coord_grids = {}
         for res in eval_resolutions:
