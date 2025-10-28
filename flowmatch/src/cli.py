@@ -20,6 +20,7 @@ from .models.perceiver_coordinate_fm import PerceiverCoordinateFM
 from .models.mamba_coordinate_fm import MambaCoordinateFM
 from .models.mamba_ssm_fm import MambaSSMFM
 from .models.mamba_ssm_fm_v2 import MambaSSMFMV2
+from .models.mamba_ssm_fm_v3 import MambaSSMFMV3
 from .diffusion.ddpm import GaussianDiffusion
 from .diffusion.rectified_flow import RectifiedFlow
 from .trainers.trainer_ddpm import DDPMTrainer
@@ -165,6 +166,15 @@ def build_model(config, device):
             d_state=model_config['d_state'],
             dropout=model_config['dropout']
         )
+    elif model_type == 'mamba_ssm_fm_v3':
+        backbone = MambaSSMFMV3(
+            channel=model_config['channel'],
+            num_fourier_feats=model_config['num_fourier_feats'],
+            d_model=model_config['d_model'],
+            num_layers=model_config['num_layers'],
+            d_state=model_config['d_state'],
+            dropout=model_config['dropout']
+        )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -172,7 +182,7 @@ def build_model(config, device):
     # CRITICAL: Coordinate-based models should NOT be wrapped!
     # They already implement flow matching internally with coordinate-specific interfaces
     coordinate_models = ['coordinate_fm', 'perceiver_coordinate_fm', 'mamba_coordinate_fm',
-                         'mamba_ssm_fm', 'mamba_ssm_fm_v2']
+                         'mamba_ssm_fm', 'mamba_ssm_fm_v2', 'mamba_ssm_fm_v3']
 
     if config['model_type'] == 'ddpm':
         model = GaussianDiffusion(
@@ -211,8 +221,8 @@ def build_trainer(model, train_loader, config, sparsity_controller):
     }
 
     # Check if using coordinate-based model
-    if model_type == 'mamba_ssm_fm_v2':
-        # V2 trainer with correct forward signature and dataset format
+    if model_type in ['mamba_ssm_fm_v2', 'mamba_ssm_fm_v3']:
+        # V2/V3 trainer with correct forward signature and dataset format
         trainer = MambaSSMTrainerV2(
             flow=model,
             train_loader=train_loader,

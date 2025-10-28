@@ -1,0 +1,65 @@
+# CIFAR-10 Flow Matching with Mamba SSM V3 (Optimized)
+# Version: Performance-optimized with O(N) sequential scan
+#
+# Key improvements over V2:
+# - Replace O(N²) decay matrix with O(N) sequential scan
+# - 2-3x faster training and inference
+# - Much better memory efficiency (no huge decay tensor)
+# - Same accuracy as V2
+#
+# Algorithm change:
+# V2: decay = A^(i-j) for all i,j → h = einsum('nmd,bnd->bmd', decay, Bu)  # O(N²) memory
+# V3: h[t] = A * h[t-1] + Bu[t]  # O(N) time, O(1) extra memory
+
+model_type: "flow_matching"
+
+# Model architecture (Mamba SSM V3 - Optimized)
+model:
+  type: "mamba_ssm_fm_v3"
+  image_size: 32              # Base training resolution
+  channel: 3
+  num_fourier_feats: 256      # Gaussian Fourier feature size
+  d_model: 512                # Model dimension
+  num_layers: 6               # Mamba blocks
+  d_state: 16                 # SSM state dimension
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 64              # Same as reference
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 0.2           # 20% sparse supervision (204 pixels, non-overlapping)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001                  # 1e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_mamba_ssm_v3"
+device: "cuda"
+seed: 42
