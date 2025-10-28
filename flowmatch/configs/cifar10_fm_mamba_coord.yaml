@@ -1,0 +1,69 @@
+# CIFAR-10 Flow Matching with Mamba Coordinate Model
+# Version: Mamba SSM + Coordinate-Based (~5M parameters)
+#
+# Key features:
+# - Linear complexity O(N) vs transformer O(N²)
+# - Gaussian Fourier features for continuous coordinates
+# - Dense supervision on ALL pixels (100% at 32×32)
+# - Query-based decoding for arbitrary resolutions
+# - Extremely fast training and inference
+#
+# Requirements:
+#   pip install mamba-ssm
+
+model_type: "flow_matching"
+
+# Model architecture (Mamba + coordinate-based)
+model:
+  type: "mamba_coordinate_fm"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
+  channel: 3
+  dim: 512                    # Model dimension
+  depth: 6                    # Mamba blocks
+  d_state: 16                 # SSM state dimension
+  d_conv: 4                   # Convolution kernel size
+  expand: 2                   # Expansion factor
+  fourier_mapping_size: 256   # Gaussian Fourier feature size
+  fourier_scale: 10.0         # Fourier feature scale
+  num_heads: 8                # Cross-attention heads (for decoder)
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 128             # Larger batch (Mamba is efficient)
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_mamba_coord"
+device: "cuda"
+seed: 42

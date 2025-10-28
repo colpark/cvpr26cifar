@@ -5,5 +5,11 @@ from .dit_fm import DiTFM
 from .perceiver_io_fm import PerceiverIOFM
 from .perceiver_io_fm_v2 import PerceiverIOFMV2
 from .coordinate_fm import CoordinateBasedFM
+from .perceiver_coordinate_fm import PerceiverCoordinateFM
+from .mamba_coordinate_fm import MambaCoordinateFM
 
-__all__ = ['UNetDDPM', 'UNetFM', 'DiTFM', 'PerceiverIOFM', 'PerceiverIOFMV2', 'CoordinateBasedFM']
+__all__ = [
+    'UNetDDPM', 'UNetFM', 'DiTFM',
+    'PerceiverIOFM', 'PerceiverIOFMV2',
+    'CoordinateBasedFM', 'PerceiverCoordinateFM', 'MambaCoordinateFM'
+]

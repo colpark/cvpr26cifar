@@ -16,6 +16,8 @@ from .models.dit_fm import DiTFM
 from .models.perceiver_io_fm import PerceiverIOFM
 from .models.perceiver_io_fm_v2 import PerceiverIOFMV2
 from .models.coordinate_fm import CoordinateBasedFM
+from .models.perceiver_coordinate_fm import PerceiverCoordinateFM
+from .models.mamba_coordinate_fm import MambaCoordinateFM
 from .diffusion.ddpm import GaussianDiffusion
 from .diffusion.rectified_flow import RectifiedFlow
 from .trainers.trainer_ddpm import DDPMTrainer
@@ -116,6 +118,31 @@ def build_model(config, device):
             fourier_scale=model_config['fourier_scale'],
             dropout=model_config['dropout']
         )
+    elif model_type == 'perceiver_coordinate_fm':
+        backbone = PerceiverCoordinateFM(
+            channel=model_config['channel'],
+            latent_dim=model_config['latent_dim'],
+            num_latents=model_config['num_latents'],
+            depth=model_config['depth'],
+            num_heads=model_config['num_heads'],
+            head_dim=model_config['head_dim'],
+            fourier_mapping_size=model_config['fourier_mapping_size'],
+            fourier_scale=model_config['fourier_scale'],
+            dropout=model_config['dropout']
+        )
+    elif model_type == 'mamba_coordinate_fm':
+        backbone = MambaCoordinateFM(
+            channel=model_config['channel'],
+            dim=model_config['dim'],
+            depth=model_config['depth'],
+            d_state=model_config['d_state'],
+            d_conv=model_config['d_conv'],
+            expand=model_config['expand'],
+            fourier_mapping_size=model_config['fourier_mapping_size'],
+            fourier_scale=model_config['fourier_scale'],
+            num_heads=model_config['num_heads'],
+            dropout=model_config['dropout']
+        )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -152,7 +179,7 @@ def build_trainer(model, train_loader, config, sparsity_controller):
     }
 
     # Check if using coordinate-based model
-    if model_type == 'coordinate_fm':
+    if model_type in ['coordinate_fm', 'perceiver_coordinate_fm', 'mamba_coordinate_fm']:
         trainer = CoordinateFMTrainer(
             flow=model,
             train_loader=train_loader,

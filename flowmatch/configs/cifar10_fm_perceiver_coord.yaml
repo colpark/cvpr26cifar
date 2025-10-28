@@ -1,0 +1,65 @@
+# CIFAR-10 Flow Matching with Perceiver Coordinate Model
+# Version: Perceiver + Coordinate-Based (~8M parameters)
+#
+# Key features:
+# - Efficient latent bottleneck (256 latents compress 1024 inputs)
+# - Gaussian Fourier features for continuous coordinates
+# - Dense supervision on ALL pixels (100% at 32×32)
+# - Query-based decoding for arbitrary resolutions
+# - Much faster than pure transformer coordinate model
+
+model_type: "flow_matching"
+
+# Model architecture (Perceiver + coordinate-based)
+model:
+  type: "perceiver_coordinate_fm"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
+  channel: 3
+  latent_dim: 512             # Latent dimension
+  num_latents: 256            # Number of latent vectors (bottleneck)
+  depth: 6                    # Perceiver blocks
+  num_heads: 8                # Attention heads
+  head_dim: 64                # Head dimension
+  fourier_mapping_size: 256   # Gaussian Fourier feature size
+  fourier_scale: 10.0         # Fourier feature scale
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 128             # Larger batch (model is efficient)
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_perceiver_coord"
+device: "cuda"
+seed: 42
