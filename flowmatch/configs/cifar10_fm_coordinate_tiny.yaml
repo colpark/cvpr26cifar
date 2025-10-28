@@ -1,0 +1,65 @@
+# CIFAR-10 Flow Matching with Coordinate-Based Model
+# Version: Coordinate-Based Tiny (~4M parameters)
+#
+# Key features:
+# - 10x smaller than dense version (4M vs 41M params)
+# - Processes (x, y, RGB) tuples instead of image grids
+# - Continuous Fourier positional encoding (scale=50, 128 frequencies)
+# - Dense supervision on ALL pixels (100% at 32×32)
+# - Query-based decoding for arbitrary resolutions
+# - Scale-invariant generation (train 32×32, sample at 64×64, 96×96)
+
+model_type: "flow_matching"
+
+# Model architecture (coordinate-based transformer - lightweight)
+model:
+  type: "coordinate_fm"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
+  channel: 3
+  dim: 256                    # Model dimension (reduced from 512)
+  depth: 6                    # Transformer blocks (reduced from 12)
+  num_heads: 4                # Attention heads (reduced from 8)
+  mlp_ratio: 4                # MLP expansion ratio
+  num_fourier_freqs: 128      # Fourier frequency bands (reduced from 256)
+  fourier_scale: 50.0         # Max frequency (higher = finer details)
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 128             # Larger batch size since model is smaller
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002                  # Slightly higher LR for smaller model
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_coordinate_tiny"
+device: "cuda"
+seed: 42
