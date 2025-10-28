@@ -1,0 +1,67 @@
+# CIFAR-10 Flow Matching with Mamba SSM V2 (Reference Implementation)
+# Version: Exact reference following ref/mamba_diffusion.ipynb
+#
+# Key features:
+# - Correct FourierFeatures from ref/core/neural_fields/perceiver.py
+# - Correct forward signature: forward(noisy_values, query_coords, t, ...)
+# - SSMBlockFast with einsum optimization
+# - Dataset format: output_coords/output_values
+# - Vectorized SSM blocks with state space dynamics
+# - Gaussian Fourier features for continuous coordinates
+# - Linear O(N) complexity
+# - Sparse supervision on 20% of pixels (204 pixels, non-overlapping)
+# - Query-based decoding for arbitrary resolutions
+# - Multi-scale evaluation: 32×32, 64×64, 96×96
+
+model_type: "flow_matching"
+
+# Model architecture (Mamba SSM V2 - Reference Implementation)
+model:
+  type: "mamba_ssm_fm_v2"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
+  channel: 3
+  num_fourier_feats: 256      # Gaussian Fourier feature size
+  d_model: 512                # Model dimension
+  num_layers: 6               # Mamba blocks
+  d_state: 16                 # SSM state dimension
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based with reference format)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 64              # Match reference implementation
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 0.2           # 20% sparse supervision (204 pixels, non-overlapping)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0001                  # Match reference (1e-4)
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_mamba_ssm_v2"
+device: "cuda"
+seed: 42
