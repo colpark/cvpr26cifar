@@ -45,13 +45,13 @@ class MambaSSMTrainerV2(BaseTrainer):
             val_loader=None,  # Not used for coordinate-based
             optimizer_config=optimizer_config,
             device=device,
-            save_dir=save_dir,
-            max_grad_norm=max_grad_norm
+            save_dir=save_dir
         )
 
         self.flow = flow
         self.sampling_steps = sampling_steps
         self.clip_sampling = clip_sampling
+        self.max_grad_norm = max_grad_norm
         self.eval_resolutions = eval_resolutions
 
         # Loss tracking
