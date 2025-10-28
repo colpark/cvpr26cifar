@@ -8,10 +8,11 @@ from .coordinate_fm import CoordinateBasedFM
 from .perceiver_coordinate_fm import PerceiverCoordinateFM
 from .perceiver_coordinate_fast import FastPerceiverCoordinateFM
 from .mamba_coordinate_fm import MambaCoordinateFM
+from .mamba_ssm_fm import MambaSSMFM
 
 __all__ = [
     'UNetDDPM', 'UNetFM', 'DiTFM',
     'PerceiverIOFM', 'PerceiverIOFMV2',
     'CoordinateBasedFM', 'PerceiverCoordinateFM', 'FastPerceiverCoordinateFM',
-    'MambaCoordinateFM'
+    'MambaCoordinateFM', 'MambaSSMFM'
 ]

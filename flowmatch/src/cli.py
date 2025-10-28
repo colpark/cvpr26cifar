@@ -18,11 +18,13 @@ from .models.perceiver_io_fm_v2 import PerceiverIOFMV2
 from .models.coordinate_fm import CoordinateBasedFM
 from .models.perceiver_coordinate_fm import PerceiverCoordinateFM
 from .models.mamba_coordinate_fm import MambaCoordinateFM
+from .models.mamba_ssm_fm import MambaSSMFM
 from .diffusion.ddpm import GaussianDiffusion
 from .diffusion.rectified_flow import RectifiedFlow
 from .trainers.trainer_ddpm import DDPMTrainer
 from .trainers.trainer_fm import FMTrainer
 from .trainers.trainer_coordinate_fm import CoordinateFMTrainer
+from .trainers.trainer_mamba_ssm import MambaSSMTrainer
 
 
 def set_seed(seed):
@@ -143,6 +145,15 @@ def build_model(config, device):
             num_heads=model_config['num_heads'],
             dropout=model_config['dropout']
         )
+    elif model_type == 'mamba_ssm_fm':
+        backbone = MambaSSMFM(
+            channel=model_config['channel'],
+            num_fourier_feats=model_config['num_fourier_feats'],
+            d_model=model_config['d_model'],
+            num_layers=model_config['num_layers'],
+            d_state=model_config['d_state'],
+            dropout=model_config['dropout']
+        )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -179,7 +190,20 @@ def build_trainer(model, train_loader, config, sparsity_controller):
     }
 
     # Check if using coordinate-based model
-    if model_type in ['coordinate_fm', 'perceiver_coordinate_fm', 'mamba_coordinate_fm']:
+    if model_type == 'mamba_ssm_fm':
+        # Special trainer for Mamba SSM (needs noisy values)
+        trainer = MambaSSMTrainer(
+            flow=model,
+            train_loader=train_loader,
+            optimizer_config=optimizer_config,
+            device=device,
+            save_dir=save_dir,
+            sampling_steps=training_config.get('sampling_steps', 50),
+            clip_sampling=training_config.get('clip_sampling', True),
+            max_grad_norm=training_config.get('max_grad_norm', 1.0),
+            eval_resolutions=training_config.get('eval_resolutions', [32, 64, 96])
+        )
+    elif model_type in ['coordinate_fm', 'perceiver_coordinate_fm', 'mamba_coordinate_fm']:
         trainer = CoordinateFMTrainer(
             flow=model,
             train_loader=train_loader,
