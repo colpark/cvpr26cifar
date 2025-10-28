@@ -1,10 +1,10 @@
 # CIFAR-10 Flow Matching with Coordinate-Based Model
-# Version: Coordinate-Based Dense
+# Version: Coordinate-Based Sparse
 #
 # Key features:
 # - Processes (x, y, RGB) tuples instead of image grids
 # - Continuous Fourier positional encoding (scale=50, 256 frequencies)
-# - Dense supervision on ALL pixels (100% at 32×32)
+# - Sparse supervision on 20% of pixels (204 pixels, non-overlapping with input)
 # - Query-based decoding for arbitrary resolutions
 # - Scale-invariant generation (train 32×32, sample at 64×64, 96×96)
 
@@ -37,7 +37,7 @@ dataset:
 
   # Coordinate-specific parameters
   input_ratio: 0.2            # 20% sparse input (204 pixels)
-  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  target_ratio: 0.2           # 20% sparse supervision (204 pixels, non-overlapping)
   image_size: 32
 
 # Training
@@ -59,6 +59,6 @@ training:
   save_every: 10000
 
 # Paths
-save_dir: "./results/cifar10_fm_coordinate_dense"
+save_dir: "./results/cifar10_fm_coordinate_sparse"
 device: "cuda"
 seed: 42

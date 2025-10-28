@@ -5,7 +5,7 @@
 # - Lightweight: ~5M parameters, 3x faster than standard Perceiver
 # - Efficient latent bottleneck (128 latents compress inputs)
 # - Gaussian Fourier features for continuous coordinates
-# - Dense supervision on ALL pixels (100% at 32×32)
+# - Sparse supervision on 20% of pixels (204 pixels, non-overlapping)
 # - Query-based decoding for arbitrary resolutions
 
 model_type: "flow_matching"
@@ -38,7 +38,7 @@ dataset:
 
   # Coordinate-specific parameters
   input_ratio: 0.2            # 20% sparse input (204 pixels)
-  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  target_ratio: 0.2           # 20% sparse supervision (204 pixels, non-overlapping)
   image_size: 32
 
 # Training

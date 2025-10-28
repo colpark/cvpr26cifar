@@ -259,7 +259,7 @@ class CoordinateFMTrainer(BaseTrainer):
     def train(self, num_steps, log_every=100, sample_every=2500, save_every=10000):
         """Training loop."""
         print(f"Starting coordinate-based Flow Matching training for {num_steps} steps")
-        print(f"Dense supervision: {self.train_loader.dataset.target_ratio * 100:.0f}% of pixels")
+        print(f"Target supervision: {self.train_loader.dataset.target_ratio * 100:.0f}% of pixels")
         print(f"Evaluation resolutions: {self.eval_resolutions}")
 
         self.model.train()

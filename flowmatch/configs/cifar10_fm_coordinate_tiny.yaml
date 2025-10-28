@@ -2,10 +2,10 @@
 # Version: Coordinate-Based Tiny (~4M parameters)
 #
 # Key features:
-# - 10x smaller than dense version (4M vs 41M params)
+# - 10x smaller than standard version (4M vs 41M params)
 # - Processes (x, y, RGB) tuples instead of image grids
 # - Continuous Fourier positional encoding (scale=50, 128 frequencies)
-# - Dense supervision on ALL pixels (100% at 32×32)
+# - Sparse supervision on 20% of pixels (204 pixels, non-overlapping)
 # - Query-based decoding for arbitrary resolutions
 # - Scale-invariant generation (train 32×32, sample at 64×64, 96×96)
 
@@ -38,7 +38,7 @@ dataset:
 
   # Coordinate-specific parameters
   input_ratio: 0.2            # 20% sparse input (204 pixels)
-  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  target_ratio: 0.2           # 20% sparse supervision (204 pixels, non-overlapping)
   image_size: 32
 
 # Training
