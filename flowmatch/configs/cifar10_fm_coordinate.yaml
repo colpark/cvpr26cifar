@@ -13,6 +13,7 @@ model_type: "flow_matching"
 # Model architecture (coordinate-based transformer)
 model:
   type: "coordinate_fm"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
   channel: 3
   dim: 512                    # Model dimension
   depth: 12                   # Transformer blocks
