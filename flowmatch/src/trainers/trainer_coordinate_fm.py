@@ -36,7 +36,12 @@ class CoordinateFMTrainer(BaseTrainer):
                  save_dir='./results', sampling_steps=50, clip_sampling=True,
                  max_grad_norm=1.0, eval_resolutions=[32, 64, 96]):
         super().__init__(
-            flow, train_loader, optimizer_config, device, save_dir,
+            model=flow,
+            train_loader=train_loader,
+            val_loader=None,
+            optimizer_config=optimizer_config,
+            device=device,
+            save_dir=save_dir,
             sparsity_controller=None  # Not used in coordinate-based
         )
         self.sampling_steps = sampling_steps
