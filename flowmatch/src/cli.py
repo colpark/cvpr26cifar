@@ -169,6 +169,11 @@ def build_model(config, device):
         raise ValueError(f"Unknown model type: {model_type}")
 
     # Wrap in diffusion/flow model
+    # CRITICAL: Coordinate-based models should NOT be wrapped!
+    # They already implement flow matching internally with coordinate-specific interfaces
+    coordinate_models = ['coordinate_fm', 'perceiver_coordinate_fm', 'mamba_coordinate_fm',
+                         'mamba_ssm_fm', 'mamba_ssm_fm_v2']
+
     if config['model_type'] == 'ddpm':
         model = GaussianDiffusion(
             backbone,
@@ -177,10 +182,15 @@ def build_model(config, device):
             loss_type=config['diffusion']['loss_type']
         )
     elif config['model_type'] == 'flow_matching':
-        model = RectifiedFlow(
-            backbone,
-            image_size=model_config['image_size']
-        )
+        if model_type in coordinate_models:
+            # Coordinate-based models: use directly without wrapper
+            model = backbone
+        else:
+            # Grid-based models: wrap in RectifiedFlow
+            model = RectifiedFlow(
+                backbone,
+                image_size=model_config['image_size']
+            )
     else:
         raise ValueError(f"Unknown model type: {config['model_type']}")
 
