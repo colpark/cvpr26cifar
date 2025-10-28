@@ -72,16 +72,16 @@ class MambaSSMTrainerV2(BaseTrainer):
             batch: Dict with keys:
                 - 'input_coords': (B, N_in, 2)
                 - 'input_values': (B, N_in, 3)
-                - 'output_coords': (B, N_out, 2)  # CRITICAL: 'output_coords', not 'target_coords'!
-                - 'output_values': (B, N_out, 3)   # CRITICAL: 'output_values', not 'target_values'!
+                - 'target_coords': (B, N_out, 2)  # Our dataset uses 'target_coords'
+                - 'target_values': (B, N_out, 3)  # Our dataset uses 'target_values'
         """
         self.flow.train()
 
-        # Extract data (using correct field names)
+        # Extract data (using our dataset's field names)
         input_coords = batch['input_coords'].to(self.device)
         input_values = batch['input_values'].to(self.device)
-        output_coords = batch['output_coords'].to(self.device)  # Correct field name!
-        output_values = batch['output_values'].to(self.device)  # Correct field name!
+        output_coords = batch['target_coords'].to(self.device)  # Use 'target_coords' from our dataset
+        output_values = batch['target_values'].to(self.device)  # Use 'target_values' from our dataset
 
         B = input_coords.shape[0]
 
@@ -174,8 +174,8 @@ class MambaSSMTrainerV2(BaseTrainer):
         batch = next(iter(self.train_loader))
         input_coords = batch['input_coords'][:4].to(self.device)
         input_values = batch['input_values'][:4].to(self.device)
-        output_coords = batch['output_coords'][:4].to(self.device)
-        output_values = batch['output_values'][:4].to(self.device)
+        output_coords = batch['target_coords'][:4].to(self.device)  # Use 'target_coords'
+        output_values = batch['target_values'][:4].to(self.device)  # Use 'target_values'
         full_images = batch['full_image'][:4].to(self.device)
 
         # Sample
