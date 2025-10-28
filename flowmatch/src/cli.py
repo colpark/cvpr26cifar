@@ -8,16 +8,19 @@ import random
 import numpy as np
 
 from .datasets.cifar10 import get_cifar10_dataloader
+from .datasets.cifar10_coordinate import get_cifar10_coordinate_dataloader
 from .sparsity.controller import SparsityController
 from .models.unet_ddpm import UNetDDPM
 from .models.unet_fm import UNetFM
 from .models.dit_fm import DiTFM
 from .models.perceiver_io_fm import PerceiverIOFM
 from .models.perceiver_io_fm_v2 import PerceiverIOFMV2
+from .models.coordinate_fm import CoordinateBasedFM
 from .diffusion.ddpm import GaussianDiffusion
 from .diffusion.rectified_flow import RectifiedFlow
 from .trainers.trainer_ddpm import DDPMTrainer
 from .trainers.trainer_fm import FMTrainer
+from .trainers.trainer_coordinate_fm import CoordinateFMTrainer
 
 
 def set_seed(seed):
@@ -102,6 +105,17 @@ def build_model(config, device):
             input_fourier_features=model_config['input_fourier_features'],
             query_fourier_features=model_config['query_fourier_features']
         )
+    elif model_type == 'coordinate_fm':
+        backbone = CoordinateBasedFM(
+            channel=model_config['channel'],
+            dim=model_config['dim'],
+            depth=model_config['depth'],
+            num_heads=model_config['num_heads'],
+            mlp_ratio=model_config['mlp_ratio'],
+            num_fourier_freqs=model_config['num_fourier_freqs'],
+            fourier_scale=model_config['fourier_scale'],
+            dropout=model_config['dropout']
+        )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -129,6 +143,7 @@ def build_trainer(model, train_loader, config, sparsity_controller):
     training_config = config['training']
     device = config['device']
     save_dir = config['save_dir']
+    model_type = config['model']['type']
 
     optimizer_config = {
         'lr': training_config['lr'],
@@ -136,7 +151,20 @@ def build_trainer(model, train_loader, config, sparsity_controller):
         'betas': tuple(training_config.get('betas', [0.9, 0.999]))
     }
 
-    if config['model_type'] == 'ddpm':
+    # Check if using coordinate-based model
+    if model_type == 'coordinate_fm':
+        trainer = CoordinateFMTrainer(
+            flow=model,
+            train_loader=train_loader,
+            optimizer_config=optimizer_config,
+            device=device,
+            save_dir=save_dir,
+            sampling_steps=training_config.get('sampling_steps', 50),
+            clip_sampling=training_config.get('clip_sampling', True),
+            max_grad_norm=training_config.get('max_grad_norm', 1.0),
+            eval_resolutions=training_config.get('eval_resolutions', [32, 64, 96])
+        )
+    elif config['model_type'] == 'ddpm':
         trainer = DDPMTrainer(
             diffusion=model,
             train_loader=train_loader,
@@ -186,27 +214,48 @@ def main():
 
     # Build dataloader
     dataset_config = config['dataset']
-    train_loader = get_cifar10_dataloader(
-        root=dataset_config['root'],
-        train=dataset_config['train'],
-        batch_size=dataset_config['batch_size'],
-        augment_horizontal_flip=dataset_config.get('augment_horizontal_flip', False),
-        num_workers=dataset_config.get('num_workers', 4)
-    )
-    print(f"Loaded CIFAR-10 dataset: {len(train_loader.dataset)} images")
+    dataset_name = dataset_config.get('name', 'cifar10')
 
-    # Build sparsity controller
-    sparsity_config = config['sparsity']
-    sparsity_controller = SparsityController(
-        image_size=config['model']['image_size'],
-        mode=sparsity_config['mode'],
-        pattern=sparsity_config['pattern'],
-        sparsity=sparsity_config['sparsity'],
-        block_size=sparsity_config.get('block_size', 5),
-        num_blocks=sparsity_config.get('num_blocks', 6),
-        grid_stride=sparsity_config.get('grid_stride', 2)
-    )
-    print(f"Sparsity mode: {sparsity_config['mode']}, pattern: {sparsity_config['pattern']}")
+    if dataset_name == 'cifar10_coordinate':
+        # Coordinate-based dataset
+        train_loader = get_cifar10_coordinate_dataloader(
+            root=dataset_config['root'],
+            train=dataset_config['train'],
+            batch_size=dataset_config['batch_size'],
+            input_ratio=dataset_config.get('input_ratio', 0.2),
+            target_ratio=dataset_config.get('target_ratio', 1.0),
+            image_size=dataset_config.get('image_size', 32),
+            num_workers=dataset_config.get('num_workers', 4),
+            download=True,
+            seed=config.get('seed', 42)
+        )
+        print(f"Loaded CIFAR-10 coordinate dataset: {len(train_loader.dataset)} images")
+        print(f"Input ratio: {dataset_config.get('input_ratio', 0.2):.1%}, "
+              f"Target ratio: {dataset_config.get('target_ratio', 1.0):.1%}")
+        sparsity_controller = None  # Not used for coordinate-based
+    else:
+        # Standard grid-based dataset
+        train_loader = get_cifar10_dataloader(
+            root=dataset_config['root'],
+            train=dataset_config['train'],
+            batch_size=dataset_config['batch_size'],
+            augment_horizontal_flip=dataset_config.get('augment_horizontal_flip', False),
+            num_workers=dataset_config.get('num_workers', 4)
+        )
+        print(f"Loaded CIFAR-10 dataset: {len(train_loader.dataset)} images")
+
+        # Build sparsity controller
+        sparsity_config = config['sparsity']
+        sparsity_controller = SparsityController(
+            image_size=config['model']['image_size'],
+            mode=sparsity_config['mode'],
+            pattern=sparsity_config['pattern'],
+            sparsity=sparsity_config['sparsity'],
+            block_size=sparsity_config.get('block_size', 5),
+            num_blocks=sparsity_config.get('num_blocks', 6),
+            grid_stride=sparsity_config.get('grid_stride', 2)
+        )
+        print(f"Sparsity mode: {sparsity_config['mode']}, pattern: {sparsity_config['pattern']}")
 
     # Build model
     model = build_model(config, device)
