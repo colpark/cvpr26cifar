@@ -1,0 +1,65 @@
+# CIFAR-10 Flow Matching with Perceiver Coordinate Model (Tiny)
+# Version: Perceiver + Coordinate-Based (~5M parameters, fast)
+#
+# Key features:
+# - Lightweight: ~5M parameters, 3x faster than standard Perceiver
+# - Efficient latent bottleneck (128 latents compress inputs)
+# - Gaussian Fourier features for continuous coordinates
+# - Dense supervision on ALL pixels (100% at 32×32)
+# - Query-based decoding for arbitrary resolutions
+
+model_type: "flow_matching"
+
+# Model architecture (Perceiver + coordinate-based - tiny)
+model:
+  type: "perceiver_coordinate_fm"
+  image_size: 32              # Base training resolution (for RectifiedFlow wrapper)
+  channel: 3
+  latent_dim: 384             # Latent dimension (reduced from 512)
+  num_latents: 128            # Number of latent vectors (reduced from 256)
+  depth: 3                    # Perceiver blocks (reduced from 6)
+  num_heads: 6                # Attention heads (reduced from 8)
+  head_dim: 64                # Head dimension
+  fourier_mapping_size: 128   # Gaussian Fourier feature size (reduced from 256)
+  fourier_scale: 10.0         # Fourier feature scale
+  dropout: 0.1
+
+# Flow Matching parameters
+flow:
+  integration_method: "euler"
+
+# Dataset (coordinate-based)
+dataset:
+  name: "cifar10_coordinate"
+  root: "./data"
+  train: true
+  batch_size: 128             # Larger batch (model is efficient)
+  num_workers: 4
+
+  # Coordinate-specific parameters
+  input_ratio: 0.2            # 20% sparse input (204 pixels)
+  target_ratio: 1.0           # 100% dense supervision (all 1024 pixels)
+  image_size: 32
+
+# Training
+training:
+  num_steps: 200000
+  lr: 0.0002                  # Slightly higher LR for smaller model
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  clip_sampling: true
+  sampling_steps: 50
+
+  # Multi-resolution evaluation
+  eval_resolutions: [32, 64, 96]  # Native, 2×, 3× upsampling
+
+  # Logging
+  log_every: 100
+  sample_every: 2500
+  save_every: 10000
+
+# Paths
+save_dir: "./results/cifar10_fm_perceiver_coord_tiny"
+device: "cuda"
+seed: 42
